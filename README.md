@@ -102,5 +102,14 @@ The file GLM/GLM_Params/params.json contains a list of parameters that can be ta
 # Demo
 Demo/demo.py contains a quick demo of the script running.
 
+First, a standard GLM with parameterized basis will be fit to the toy example -- at the end displaying the inferred sets of filters
+
+![GLM_ARD_TOY](Demo/demo_plots/basis_filter_plot.png)
+
+Afterwards, NPGLM will be run on the same toy data set -- at the end displaying the newly inferred sets of filters
+![NPGLM_TOY](Demo/demo_plots/gp_filter_plot.png)
+
+
+
 
 
