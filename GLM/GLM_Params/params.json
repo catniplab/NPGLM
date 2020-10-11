@@ -1,0 +1,28 @@
+{
+  "_header_general______________": "general params",
+  "delta": 1e-3,
+  "num_test_trials": 50,
+
+  "_params_______________________________": "training params",
+
+  "duration_hist": 75,
+  "basis_empirical_iter": 25,
+  "basis_map_iter": 45,
+  "basis_evidence_iter": 30,
+
+  "time_optimization_radius": 50e-3,
+  "gp_variational_iter": 45,
+  "gp_hyperparameter_iter": 15,
+  "gp_hyperparameter_percent_bound": 0.20,
+  "gp_total_iter": 1000,
+
+  "expt_problem_data_path": "PreProcessing/generated_data/filter_set_a/data_df.pkl",
+  "gp_filter_plot_path": "neuron_data/gp_filter_plot",
+  "basis_filter_plot_path": "neuron_data/basis_filter_plot",
+  "gp_ev_path": "neuron_data/neuron_gp_ev",
+  "basis_ev_path": "neuron_data/neuron_map_ev",
+  "inference_type": "basis",
+  "likelihood_type": "poisson"
+
+}
+
