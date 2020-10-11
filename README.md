@@ -1,3 +1,2 @@
 # NPGLM
-
-In neuroscience typically GLMs are used to train an encoding model to characterize how select covariates (stimuli/behavior/spiking history)  
+Encoding models of neural activity serve to infer the spiking rate as a function of relevant experimental conditions.
