@@ -85,5 +85,22 @@ npglm.add_covariate(hist)
 npglm.train_variational()
 ```
 
+You can add more covariates if you wish i.e. spiking history is a viable candidate as well as any other variables in the experiment.  All data will be saved to the folder specified in the .json parameters file.  For multiple experiments, we recommend using the .json file to specify different folders for different experimental conditions so that the whole process can be completely scripted.
+
+# JSON Parameters
+The file GLM/GLM_Params/params.json contains a list of parameters that can be taken advantage of for quick scripting of running an array of experiments. You can specify the training routine i.e. how many iterations are spent optimizing hyperparameters as well as variatonal parameters and the maximum hyperparameters are allowed to change per iteration. 
+
+| Parameter | Description |
+| --- | --- |
+| gp_filter_plot_path | absolute path to save filter plot (showing mean/95% cred. interval/inducing points) |
+| gp_ev_path | path to save data |
+| time_optimization_radius | maximum filter expansion per iteration |
+| delta | bin size |
+| likelihood type | likelihood function of the observations, supports 'poisson'/'logistic' |
+| inference type | use 'basis' or 'gp' to specify inference using basis functions / npglm |
+
+# Demo
+Demo/demo.py contains a quick demo of the script running.
+
 
 
