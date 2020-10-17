@@ -4,7 +4,7 @@ from Utils import utils, SpikeGen
 import torch
 
 def main():
-    # demo script
+    # demo script #
     expt = 'expt_supp'
     params = utils.Params('GLM/GLM_Params/params.json')
     params.torch_d_type = torch.float64
