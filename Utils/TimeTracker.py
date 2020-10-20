@@ -9,11 +9,11 @@ class TimeTracker:
         self.params = params
         self.delta = params.delta
 
-        self.offset = kwargs['offset_init']
-        self.duration = kwargs['duration_init']
+        self.offset = kwargs['filter_offset']
+        self.duration = kwargs['filter_duration']
         self.time_plot_min = kwargs['time_plot_min']
         self.time_plot_max = kwargs['time_plot_max']
-        self.use_every_blank_points = kwargs['use_every_blank_points']
+        self.use_every_blank_points = kwargs['inducing_pt_spacing_init']
         self.is_for_hist = kwargs['is_hist']
 
         self.triu_dx = None

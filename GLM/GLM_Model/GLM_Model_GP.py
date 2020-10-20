@@ -19,6 +19,10 @@ class GLM_Model_GP(GLM_Model.GLM_Model):
         self.total_exp = None
         self.total_kld = None
 
+    def add_covariate(self, covariate):
+        super().add_covariate(covariate)
+        self.register_parameter(name=f'{covariate.name}_u', param=covariate.time.time_dict['u'])
+
     def train_variational_parameters(self, kernel_prep_dict, i):
         self.kernel_prep_dict = kernel_prep_dict
         self.update_time_bounds()

@@ -21,7 +21,7 @@
   "basis_filter_plot_path": "neuron_data/basis_filter_plot",
   "gp_ev_path": "neuron_data/neuron_gp_ev",
   "basis_ev_path": "neuron_data/neuron_map_ev",
-  "inference_type": "basis",
+  "inference_type": "gp",
   "likelihood_type": "poisson"
 
 }

@@ -55,7 +55,7 @@ class GP_Covariate(Covariate.Covariate):
         for param_name, param in self.gp_params.gp_params.items():
             self.gp_params.update_with_new_bounds(param_name, self.init_bounds_params[param_name])
 
-    def add_time(self, time_params, glm_obj):
+    def add_time(self, time_params):
         self.time = TimeTracker.TimeTracker(self.params, **time_params)
 
         self.params_to_optimize['u'] = self.time.time_dict['u']
@@ -66,7 +66,6 @@ class GP_Covariate(Covariate.Covariate):
 
         self.bounds_params['u'] = [lower, upper]
         self.time.initialize_transform(self.bounds_params['u'], 'u')
-        glm_obj.register_parameter(name=f'{self.name}_u', param=self.time.time_dict['u'])
 
     def initialize_design_matrix(self):
         upper_add = 300 if self.name != 'History' else 100

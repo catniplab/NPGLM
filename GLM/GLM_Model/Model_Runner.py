@@ -25,18 +25,6 @@ class Model_Runner:
 
         self.data_df = pd.read_pickle(self.params.expt_problem_data_path)
 
-        # stim_data = self.data_df.loc['Stimuli_1', 'data']
-        # hist_data = self.data_df.loc['History', 'data']
-        # spike_data = self.data_df.loc['History', 'data']
-        #
-        # self.stim_data = np.zeros((5, 1000))
-        # self.hist_data = np.zeros((5, 1000))
-        # self.spike_data = np.zeros((5, 1000))
-        #
-        # for i in range(5):
-        #     self.stim_data[i, :] = stim_data[1000*i: 1000*(i+1)]
-        #     self.hist_data[i, :] = hist_data[1000*i: 1000*(i+1)]
-        #     self.spike_data[i,:] = spike_data[1000*i: 1000*(i+1)]
         self.hist_data = self.data_df.loc['History', 'data']
         self.spike_data = self.data_df.loc['History', 'data']
         self.stim1_data = self.data_df.loc['Stim1', 'data']
@@ -44,19 +32,6 @@ class Model_Runner:
         self.stim3_data = self.data_df.loc['Stim3', 'data']
         self.hist_data_b = self.data_df.loc['Coupling_b', 'data']
         self.hist_data_c = self.data_df.loc['Coupling_c', 'data']
-        # self.spike_data = self.data_df.loc['History', 'data'][:,1750:5500]
-        # self.cue_data = self.data_df.loc['Cue', 'data'][:,1750:5500]
-        # self.lick_init_data = self.data_df.loc['Lick_Init', 'data'][:,1750:5500]
-        # self.lick_train_data = self.data_df.loc['Lick_Train', 'data'][:,1750:5500]
-        # self.lick_term_data = self.data_df.loc['Lick_Term', 'data'][:,1750:5500]
-        #
-        # self.hist_data = self.data_df.loc['History', 'data']
-        # self.spike_data = self.data_df.loc['History', 'data']
-        # self.cue_data = self.data_df.loc['Cue', 'data']
-        # self.lick_init_data = self.data_df.loc['Lick_Init', 'data']
-        # self.lick_train_data = self.data_df.loc['Lick_Train', 'data']
-        # self.lick_term_data = self.data_df.loc['Lick_Term', 'data']
-
 
     def create_variational_covariates(self):
         kernel_prep_dict = {'chol': ['Kuu'], 'inv': ['Kuu']}
@@ -77,27 +52,32 @@ class Model_Runner:
                        'sigma': [0.1, 15],
                        'kernel_epsilon_noise_std': [1e-4, 5],
                        'gain': [-15, -3],
-                       'tau': [1e-4, 3e-3],
-                       'ouconst': [0.1, 1000]
+                       'tau': [1e-4, 3e-3]
                        }
 
-        hist_time_params = {'offset_init': 1,
-                            'duration_init': 110,
+        hist_time_params = {'filter_offset': 1,
+                            'filter_duration': 110,
                             'time_plot_min': 1,
                             'time_plot_max': 115,
-                            'use_every_blank_points': 2,
+                            'inducing_pt_spacing_init': 2,
                             'is_hist': True}
 
-        hist_gp_params = {'alpha': [750.0, True], 'gamma': [1000.0, True], 'sigma': [np.sqrt(4), True],
-                          'gain': [-5, False], 'tau': [1e-3, False],
-                          'ouconst': [100, False],
+        hist_gp_params = {'alpha': [750.0, True],
+                          'gamma': [1000.0, True],
+                          'sigma': [np.sqrt(4), True],
+                          'gain': [-5, False],
+                          'tau': [1e-3, False],
                           'kernel_epsilon_noise_std': [1e-3, False],
                           'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        hist = GP_Covariate.GP_Covariate(self.params, hist_etc_params, self.hist_data, name='History', is_cov=False, is_hist=True, use_bases=False)
+        hist = GP_Covariate.GP_Covariate(self.params, hist_etc_params, self.hist_data,
+                                         name='History',
+                                         is_cov=False,
+                                         use_bases=False)
+
         hist.add_bounds_params(hist_bounds)
         hist.add_gp_params(hist_gp_params)
-        hist.add_time(hist_time_params, glm_gp)
+        hist.add_time(hist_time_params)
         glm_gp.add_covariate(hist)
 
         ##########################################
@@ -116,11 +96,11 @@ class Model_Runner:
                        'kernel_epsilon_noise_std': [1e-4, 1.5]
                        }
 
-        cue_time_params = {'offset_init': 0,
-                            'duration_init': 1000,
+        cue_time_params = {'filter_offset': 0,
+                            'filter_duration': 1000,
                             'time_plot_min': 0,
                             'time_plot_max': 1100,
-                            'use_every_blank_points': 15,
+                            'inducing_pt_spacing_init': 15,
                             'is_hist': False}
 
         cue_gp_params = {'alpha': [100.0, True], 'gamma': [600.0, True], 'sigma': [np.sqrt(4), True],
@@ -128,11 +108,10 @@ class Model_Runner:
                           'kernel_epsilon_noise_std': [1e-3, False],
                           'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim1_data, name='Stim1', is_cov=True,
-                                          is_hist=False)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim1_data, name='Stim1', is_cov=True)
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params, glm_gp)
+        cue.add_time(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -151,11 +130,11 @@ class Model_Runner:
                        'kernel_epsilon_noise_std': [1e-4, 1.5]
                        }
 
-        cue_time_params = {'offset_init': -250,
-                            'duration_init': 500,
+        cue_time_params = {'filter_offset': -250,
+                            'filter_duration': 500,
                             'time_plot_min': -300,
                             'time_plot_max': 300,
-                            'use_every_blank_points': 15,
+                            'inducing_pt_spacing_init': 15,
                             'is_hist': False}
 
         cue_gp_params = {'alpha': [100.0, True], 'gamma': [600.0, True], 'sigma': [np.sqrt(4), True],
@@ -163,11 +142,10 @@ class Model_Runner:
                           'kernel_epsilon_noise_std': [1e-3, False],
                           'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim2_data, name='Stim2', is_cov=True,
-                                          is_hist=False)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim2_data, name='Stim2', is_cov=True)
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params, glm_gp)
+        cue.add_time(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -186,11 +164,11 @@ class Model_Runner:
                        'kernel_epsilon_noise_std': [1e-4, 1.5]
                        }
 
-        cue_time_params = {'offset_init': 0,
-                            'duration_init': 400,
+        cue_time_params = {'filter_offset': 0,
+                            'filter_duration': 400,
                             'time_plot_min': 0,
                             'time_plot_max': 500,
-                            'use_every_blank_points': 15,
+                            'inducing_pt_spacing_init': 15,
                             'is_hist': False}
 
         cue_gp_params = {'alpha': [100.0, True], 'gamma': [600.0, True], 'sigma': [np.sqrt(4), True],
@@ -198,11 +176,10 @@ class Model_Runner:
                           'kernel_epsilon_noise_std': [1e-3, False],
                           'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim3_data, name='Stim3', is_cov=True,
-                                          is_hist=False)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim3_data, name='Stim3', is_cov=True)
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params, glm_gp)
+        cue.add_time(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -221,11 +198,11 @@ class Model_Runner:
                       'kernel_epsilon_noise_std': [1e-4, 1.5]
                       }
 
-        cue_time_params = {'offset_init': 1,
-                           'duration_init': 100,
+        cue_time_params = {'filter_offset': 1,
+                           'filter_duration': 100,
                            'time_plot_min': 0,
                            'time_plot_max': 150,
-                           'use_every_blank_points': 2,
+                           'inducing_pt_spacing_init': 2,
                            'is_hist': False}
 
         cue_gp_params = {'alpha': [5000.0, True], 'gamma': [1000.0, True], 'sigma': [np.sqrt(9), True],
@@ -233,11 +210,10 @@ class Model_Runner:
                          'kernel_epsilon_noise_std': [1e-3, False],
                          'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_b, name='Coupling_b', is_cov=True,
-                                        is_hist=False)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_b, name='Coupling_b', is_cov=True)
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params, glm_gp)
+        cue.add_time(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -256,11 +232,11 @@ class Model_Runner:
                       'kernel_epsilon_noise_std': [1e-4, 1.5]
                       }
 
-        cue_time_params = {'offset_init': 1,
-                           'duration_init': 100,
+        cue_time_params = {'filter_offset': 1,
+                           'filter_duration': 100,
                            'time_plot_min': 0,
                            'time_plot_max': 150,
-                           'use_every_blank_points': 2,
+                           'inducing_pt_spacing_init': 2,
                            'is_hist': False}
 
         cue_gp_params = {'alpha': [5000.0, True], 'gamma': [1000.0, True], 'sigma': [np.sqrt(9), True],
@@ -268,14 +244,11 @@ class Model_Runner:
                          'kernel_epsilon_noise_std': [1e-3, False],
                          'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_c, name='Coupling_c', is_cov=True,
-                                        is_hist=False)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_c, name='Coupling_c', is_cov=True)
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params, glm_gp)
+        cue.add_time(cue_time_params)
         glm_gp.add_covariate(cue)
-
-
 
         self.variational_model = PoissonVariational(self.params, self.data_df, glm_gp, kernel_prep_dict)
         self.variational_model.initialize_variational_model()
