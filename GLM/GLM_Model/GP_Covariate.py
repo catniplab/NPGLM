@@ -55,8 +55,13 @@ class GP_Covariate(Covariate.Covariate):
         for param_name, param in self.gp_params.gp_params.items():
             self.gp_params.update_with_new_bounds(param_name, self.init_bounds_params[param_name])
 
-    def add_time(self, time_params):
-        self.time = TimeTracker.TimeTracker(self.params, **time_params)
+    def add_time_init(self, time_params):
+        self.time_params = time_params
+        self.time_params['first_creation'] = True
+        self.adjust_time()
+
+    def adjust_time(self):
+        self.time = TimeTracker.TimeTracker(self.params, **self.time_params)
 
         self.params_to_optimize['u'] = self.time.time_dict['u']
         self.main_params_to_optimize['u'] = self.time.time_dict['u']
@@ -214,10 +219,11 @@ class GP_Covariate(Covariate.Covariate):
             self.gp_params.update_with_transform(self.bounds_transform[name], name)
 
     def update_design_matrix(self):
-        diff_upper = 2 * int(np.ceil((self.time.time_dict['torch']['u'].data.detach().numpy().max() -
-                                      self.time.time_dict['torch']['x'].data.numpy().max()) / self.delta))
-        diff_lower = 2 * int(np.ceil((self.time.time_dict['torch']['x'].data.numpy().min() -
-                                      self.time.time_dict['torch']['u'].data.detach().numpy().min()) / self.delta))
+        diff_upper = 2 * int(np.ceil((self.time.time_dict_t['u']().data.detach().numpy().max() -
+                                      self.time.time_dict['x'].data.numpy().max()) / self.delta))
+
+        diff_lower = 2 * int(np.ceil((self.time.time_dict['x'].data.numpy().min() -
+                                      self.time.time_dict_t['u']().data.detach().numpy().min()) / self.delta))
 
         if self.name is 'History':
             return
@@ -225,6 +231,7 @@ class GP_Covariate(Covariate.Covariate):
         num_add_upper = diff_upper if diff_upper > 0 else 0
         num_add_lower = diff_lower if diff_lower > 0 else 0
 
+        # TODO: should we add points symmetrically
         if num_add_upper > num_add_lower:
             num_add_lower = num_add_upper
 
@@ -240,17 +247,21 @@ class GP_Covariate(Covariate.Covariate):
         new_offset = self.time.offset - num_add_lower
         new_duration = self.time.duration + num_add_lower + num_add_upper
 
-        upper_times = self.time.time_dict['torch']['x'].data.numpy().max() + self.delta * np.arange(1, num_add_upper + 1)
-        lower_times = self.time.time_dict['torch']['x'].data.numpy().min() - self.delta * np.arange(1, num_add_lower + 1)
+        # TODO: symmetric or not
+        upper_times = self.time.time_dict['x'].data.numpy().max() + self.delta * np.arange(1, num_add_upper + 1)
+        lower_times = self.time.time_dict['x'].data.numpy().min() - self.delta * np.arange(1, num_add_lower + 1)
 
         if self.name is 'History':
             lower_times = np.array([])
         new_times = np.concatenate([lower_times, upper_times])
 
-        self.X = torch.tensor(utils.create_convolution_matrix(self.x, new_offset, new_duration), dtype=torch.double)
+        self.time_params['filter_duration'] = self.time_params['filter_duration'] + upper_times.shape[0] + lower_times.shape[0]
+        self.time_params['filter_offset'] = lower_times.min()
+
         self.time.add_design_matrix_points(new_times)
         self.time.offset = new_offset
         self.time.duration = new_duration
+        self.initialize_design_matrix()
 
     def get_log_likelihood_terms(self):
         if self.etc_params['use_basis_form']:

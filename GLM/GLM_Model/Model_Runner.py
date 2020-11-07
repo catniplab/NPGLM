@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.linalg import sqrtm
+from collections import OrderedDict
 
 from GLM.GLM_Model.PoissonVariational import PoissonVariational
 from GLM.GLM_Model.PoissonMAP import PoissonMAP
@@ -21,8 +22,35 @@ class Model_Runner:
         self.hist_data = None
         self.stim_data = None
 
-    def initialize_design_matrices(self):
+    def initialize_design_matrices_demo(self, data_df):
+        self.data_df = data_df
+        self.covariate_data = OrderedDict()
 
+        if 'History' not in self.data_df.index:
+            raise KeyError('"History" needs to be a data field')
+
+        else:
+            self.spike_data = self.data_df.loc['History', 'data']
+
+            for covariate in self.data_df.index:
+                self.covariate_data[covariate] = self.data_df.loc[covariate, 'data']
+
+        self.params.num_test_trials = np.floor(self.spike_data.shape[0] * 1e-2 * self.params.percent_test_trials).astype(np.int)
+
+    def create_variational_covariates_demo(self):
+        self.kernel_prep_dict = {'chol': ['Kuu'], 'inv': ['Kuu']}
+        self.glm_gp = GLM_Model_GP.GLM_Model_GP(self.params)
+        self.glm_gp.add_spike_history(self.spike_data)
+
+    def add_covariate(self, covariate):
+        self.glm_gp.add_covariate(covariate)
+
+    def train_demo(self):
+        self.variational_model = PoissonVariational(self.params, self.data_df, self.glm_gp, self.kernel_prep_dict)
+        self.variational_model.initialize_variational_model()
+        self.variational_model.train_variational_parameters()
+
+    def initialize_design_matrices(self):
         self.data_df = pd.read_pickle(self.params.expt_problem_data_path)
 
         self.hist_data = self.data_df.loc['History', 'data']
@@ -32,6 +60,8 @@ class Model_Runner:
         self.stim3_data = self.data_df.loc['Stim3', 'data']
         self.hist_data_b = self.data_df.loc['Coupling_b', 'data']
         self.hist_data_c = self.data_df.loc['Coupling_c', 'data']
+
+        self.params.num_test_trials = np.floor(self.hist_data.shape[0] * 1e-2 * self.params.percent_test_trials).astype(np.int)
 
     def create_variational_covariates(self):
         kernel_prep_dict = {'chol': ['Kuu'], 'inv': ['Kuu']}
@@ -72,12 +102,11 @@ class Model_Runner:
 
         hist = GP_Covariate.GP_Covariate(self.params, hist_etc_params, self.hist_data,
                                          name='History',
-                                         is_cov=False,
                                          use_bases=False)
 
         hist.add_bounds_params(hist_bounds)
         hist.add_gp_params(hist_gp_params)
-        hist.add_time(hist_time_params)
+        hist.add_time_init(hist_time_params)
         glm_gp.add_covariate(hist)
 
         ##########################################
@@ -88,7 +117,7 @@ class Model_Runner:
 
         cue_bounds = {'m': [-np.inf, np.inf],
                        'r': [-np.inf, np.inf],
-                       'u': [0, 1.1],
+                       'u': [0, 2.0],
                        'alpha': [50, 5000],
                        'gamma': [10, 3000],
                        'sigma': [0.1, 15],
@@ -100,18 +129,17 @@ class Model_Runner:
                             'filter_duration': 1000,
                             'time_plot_min': 0,
                             'time_plot_max': 1100,
-                            'inducing_pt_spacing_init': 15,
-                            'is_hist': False}
+                            'inducing_pt_spacing_init': 15}
 
         cue_gp_params = {'alpha': [100.0, True], 'gamma': [600.0, True], 'sigma': [np.sqrt(4), True],
                           'b': [500e-3, True],
                           'kernel_epsilon_noise_std': [1e-3, False],
                           'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim1_data, name='Stim1', is_cov=True)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim1_data, name='Stim1')
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params)
+        cue.add_time_init(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -134,18 +162,17 @@ class Model_Runner:
                             'filter_duration': 500,
                             'time_plot_min': -300,
                             'time_plot_max': 300,
-                            'inducing_pt_spacing_init': 15,
-                            'is_hist': False}
+                            'inducing_pt_spacing_init': 15}
 
         cue_gp_params = {'alpha': [100.0, True], 'gamma': [600.0, True], 'sigma': [np.sqrt(4), True],
                           'b': [100e-3, True],
                           'kernel_epsilon_noise_std': [1e-3, False],
                           'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim2_data, name='Stim2', is_cov=True)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim2_data, name='Stim2')
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params)
+        cue.add_time_init(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -168,18 +195,17 @@ class Model_Runner:
                             'filter_duration': 400,
                             'time_plot_min': 0,
                             'time_plot_max': 500,
-                            'inducing_pt_spacing_init': 15,
-                            'is_hist': False}
+                            'inducing_pt_spacing_init': 15}
 
         cue_gp_params = {'alpha': [100.0, True], 'gamma': [600.0, True], 'sigma': [np.sqrt(4), True],
                           'b': [250e-3, True],
                           'kernel_epsilon_noise_std': [1e-3, False],
                           'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim3_data, name='Stim3', is_cov=True)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.stim3_data, name='Stim3')
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params)
+        cue.add_time_init(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -202,18 +228,17 @@ class Model_Runner:
                            'filter_duration': 100,
                            'time_plot_min': 0,
                            'time_plot_max': 150,
-                           'inducing_pt_spacing_init': 2,
-                           'is_hist': False}
+                           'inducing_pt_spacing_init': 2}
 
         cue_gp_params = {'alpha': [5000.0, True], 'gamma': [1000.0, True], 'sigma': [np.sqrt(9), True],
                          'b': [15e-3, True],
                          'kernel_epsilon_noise_std': [1e-3, False],
                          'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_b, name='Coupling_b', is_cov=True)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_b, name='Coupling_b')
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params)
+        cue.add_time_init(cue_time_params)
         glm_gp.add_covariate(cue)
 
         ##########################################
@@ -236,18 +261,17 @@ class Model_Runner:
                            'filter_duration': 100,
                            'time_plot_min': 0,
                            'time_plot_max': 150,
-                           'inducing_pt_spacing_init': 2,
-                           'is_hist': False}
+                           'inducing_pt_spacing_init': 2}
 
         cue_gp_params = {'alpha': [5000.0, True], 'gamma': [1000.0, True], 'sigma': [np.sqrt(9), True],
                          'b': [30e-3, True],
                          'kernel_epsilon_noise_std': [1e-3, False],
                          'kernel_fn': [utils.decay_kernel_torch, False]}
 
-        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_c, name='Coupling_c', is_cov=True)
+        cue = GP_Covariate.GP_Covariate(self.params, cue_etc_params, self.hist_data_c, name='Coupling_c',)
         cue.add_bounds_params(cue_bounds)
         cue.add_gp_params(cue_gp_params)
-        cue.add_time(cue_time_params)
+        cue.add_time_init(cue_time_params)
         glm_gp.add_covariate(cue)
 
         self.variational_model = PoissonVariational(self.params, self.data_df, glm_gp, kernel_prep_dict)

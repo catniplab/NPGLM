@@ -20,7 +20,6 @@ class PoissonVariational:
         self.optimize_these_params = OrderedDict()
 
     def initialize_variational_model(self):
-
         self.glm.initialize_covariates()
 
         for name, cov_s in self.data_df.iterrows():

@@ -21,7 +21,21 @@ class GLM_Model_GP(GLM_Model.GLM_Model):
 
     def add_covariate(self, covariate):
         super().add_covariate(covariate)
+
         self.register_parameter(name=f'{covariate.name}_u', param=covariate.time.time_dict['u'])
+        self.bound_duration_check(covariate)
+
+    def bound_duration_check(self, covariate):
+        filter_inducing_max = covariate.time.time_dict_t['u']().max()
+        filter_inducing_min = covariate.time.time_dict_t['u']().min()
+
+        inducing_bdd_max = covariate.bounds_params['u'][1]
+        inducing_bdd_min = covariate.bounds_params['u'][0]
+
+        if filter_inducing_max > inducing_bdd_max:
+            raise ValueError(f'Upper Bound for {covariate.name} Filter less than initial maximum inducing point')
+        if filter_inducing_min < inducing_bdd_min:
+            raise ValueError(f'Lower Bound for {covariate.name} Filter greater than initial minimum inducing point')
 
     def train_variational_parameters(self, kernel_prep_dict, i):
         self.kernel_prep_dict = kernel_prep_dict
@@ -64,6 +78,9 @@ class GLM_Model_GP(GLM_Model.GLM_Model):
                 xL = scipy.optimize.minimize(obj.fun, obj.x0, method='TNC', jac=obj.jac, callback=verbose,
                                              options={'gtol': 1e-6, 'disp': True,
                                                       'maxiter': maxiter})
+
+            self.update_covariate_design_matrices()
+            self.update_time_bounds()
 
         print('done')
 

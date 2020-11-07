@@ -12,7 +12,6 @@ class Covariate:
         self.params = params
         self.delta = params.delta
         self.name = property_dict['name']
-        self.is_cov = property_dict['is_cov']
 
         self.params_to_optimize = OrderedDict()
         self.init_bounds_params = None

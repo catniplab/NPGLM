@@ -1,7 +1,7 @@
 {
   "_header_general______________": "general params",
   "delta": 1e-3,
-  "num_test_trials": 50,
+  "percent_test_trials": 30,
 
   "_params_______________________________": "training params",
 
@@ -10,7 +10,7 @@
   "basis_map_iter": 45,
   "basis_evidence_iter": 30,
 
-  "time_optimization_radius": 50e-3,
+  "time_optimization_radius": 100e-3,
   "gp_variational_iter": 45,
   "gp_hyperparameter_iter": 15,
   "gp_hyperparameter_percent_bound": 0.20,
