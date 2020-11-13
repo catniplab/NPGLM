@@ -280,7 +280,8 @@ class GLM_Model_MAP(GLM_Model.GLM_Model):
         with torch.no_grad():
             nll = self.get_nlog_likelihood(for_saving=True)
             nll_test = self.get_nlog_likelihood_test(for_saving=True)
-            fig, axs = plt.subplots(2, int(np.ceil(len(self.covariates.keys())/2)), figsize=(10, 5))
+            plt.style.use("ggplot")
+            fig, axs = plt.subplots(2, int(np.ceil(len(self.covariates.keys())/2)), figsize=(3*len(self.covariates.keys()), 10))
             axs = axs.flatten()
 
             parameter_beg_dx = 0
@@ -293,8 +294,8 @@ class GLM_Model_MAP(GLM_Model.GLM_Model):
                 entire_mean, entire_2std, entire_time, plot_mean, plot_2std, plot_time, entire_cov = covariate.get_values_to_plot(covariate_covariance)
                 parameter_beg_dx += covariate.filter_params.filter_params['m'].shape[0]
 
-                axs[dx].plot(plot_time, plot_mean, label='posterior mean', color='royalblue')
-                axs[dx].fill_between(plot_time, plot_mean - plot_2std, plot_mean + plot_2std, alpha=0.3, color='cornflowerblue')
+                axs[dx].plot(plot_time, plot_mean, label='posterior mean', color='red')
+                axs[dx].fill_between(plot_time, plot_mean - plot_2std, plot_mean + plot_2std, alpha=0.3, color='salmon')
                 axs[dx].set_ylim([plot_mean.min() - 1, plot_mean.max() + 1])
                 axs[dx].axhline(y=0, linestyle='--')
                 axs[dx].axvline(x=0, linestyle='--')

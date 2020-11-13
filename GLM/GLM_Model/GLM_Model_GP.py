@@ -276,7 +276,7 @@ class GLM_Model_GP(GLM_Model.GLM_Model):
             nll = self.get_loss()
             nll_test = self.get_test_loss()
             plt.style.use("ggplot")
-            fig, axs = plt.subplots(2, 3, figsize=(3*len(self.covariates.keys()), 10))
+            fig, axs = plt.subplots(2, int(np.ceil(len(self.covariates.keys())/2)), figsize=(3*len(self.covariates.keys()), 10))
             axs = axs.flatten()
 
             for dx, (name, covariate) in enumerate(self.covariates.items()):
@@ -296,6 +296,9 @@ class GLM_Model_GP(GLM_Model.GLM_Model):
                     axs[dx].plot(self.covariates[name].time.time_dict_t['u']().data.detach().numpy(),
                                 np.zeros(self.covariates[name].time.time_dict['u'].shape[0]),
                                 'o', color='orange', label='inducing points')
+                axs[dx].axhline(y=0, linestyle='--', zorder=0)
+                axs[dx].axvline(x=0, linestyle='--', zorder=0)
+
                 axs[dx].set_title(name)
                 axs[dx].legend()
 
