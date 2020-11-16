@@ -18,6 +18,8 @@ class NPGLM:
         self.params = None
 
         self.covariates = OrderedDict()
+        self.covariates_map = OrderedDict()
+        self.covariates_gp = OrderedDict()
         self.bounds_params = OrderedDict()
         self.gp_params = OrderedDict()
         self.time_params = OrderedDict()
