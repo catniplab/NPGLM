@@ -25,3 +25,6 @@ class NPGLM(torch.nn.Module):
             x_star_h += utils.torch_batch_convolve(X[k], covariate.filter_mean, covariate.filter_offset)
 
         loss = Y @ x_star_h - torch.sum(torch.exp(x_star_h), dim=1)
+
+    def sample_psth(self):
+        pass
